@@ -7,7 +7,7 @@
 > người trong nhóm gán khác nhau, gần như luôn là vì file này chưa nói rõ — chứ
 > không phải vì ai kém.
 
-Nhóm / tên: `...`
+Nhóm / tên: SOLO/Nguyễn Đình Đại
 Clip: `clip_01`, `clip_02`
 
 ---
@@ -29,10 +29,10 @@ Bổ sung của nhóm (nếu có): `...`
 
 | Tình huống | Luật của nhóm | Vì sao |
 | --- | --- | --- |
-| Xe bị che một phần rồi hiện lại | giữ nguyên ID nếu bị che **dưới ... frame** (mặc định của lab: 25 frame = 2 giây @ 12.5 fps) | `...` |
-| Xe bị che lâu hơn ngưỡng trên | `...` | `...` |
-| Xe rời khung hình rồi quay lại | mặc định: **track mới** | `...` |
-| Hai xe cắt nhau / chồng lên nhau | `...` | `...` |
+| Xe bị che một phần rồi hiện lại | giữ nguyên ID nếu bị che **dưới 25 frame** (mặc định của lab: 25 frame = 2 giây @ 12.5 fps) | vì nếu trên 25 frame thì thời gian đã quá lâu để có thể chắc chắn là cùng 1 object |
+| Xe bị che lâu hơn ngưỡng trên | gán **ID mới** (track mới) | thời gian che quá dài → tracker mất khả năng dự đoán vị trí, không thể chắc chắn đây là cùng 1 xe; gán nhầm còn sai hơn gán mới |
+| Xe rời khung hình rồi quay lại | mặc định: **track mới** | khi object rời khỏi khung hình, tracker không còn thông tin về object đó → không thể chắc chắn nó là cùng 1 object khi quay lại |
+| Hai xe cắt nhau / chồng lên nhau | mỗi xe giữ nguyên ID, nếu chồng một phần thì vẽ bbox riêng cho phần nhìn thấy của từng xe; nếu xe bị khuất hoàn toàn thì áp dụng luật 25 frame như occlusion bình thường | hoán đổi ID làm sai toàn bộ trajectory; xe vẫn là cùng 1 vật thể dù bị che bởi xe khác |
 
 ## 3. Luật bbox
 
@@ -40,31 +40,31 @@ Bổ sung của nhóm (nếu có): `...`
 | --- | --- |
 | Xe bị cắt bởi rìa ảnh | bbox chạm đúng rìa, không đoán phần ngoài ảnh |
 | Xe bị xe khác che một phần | bbox ôm phần **nhìn thấy được** |
-| Xe vừa xuất hiện, còn rất nhỏ / rất mờ | bắt đầu track từ frame đầu tiên xác định được là xe bốn bánh; ngưỡng nhóm chọn: `...` |
-| Xe đang đỗ, không di chuyển | `...` |
-| Keyframe đặt dày ở đâu | `...` |
+| Xe vừa xuất hiện, còn rất nhỏ / rất mờ | bắt đầu track từ frame đầu tiên xác định được là xe bốn bánh; ngưỡng nhóm chọn: bbox ≥ 20×20 px và nhìn rõ ít nhất 2 đặc điểm (thân/bánh/kính/đèn) và xuất hiện ≥ 2 frame liên tiếp |
+| Xe đang đỗ, không di chuyển | vẫn phải có bbox trên mọi frame nhìn thấy |
+| Keyframe đặt dày ở đâu | keyframe cần đặt dày ở chỗ mà object di chuyển nhanh, thay đổi hướng đột ngột |
 
 ## 4. Ít nhất ba ca mơ hồ đã gặp thật
 
 Ghi **frame cụ thể** và **ID cụ thể**, không ghi chung chung.
 
 ### Ca 1
-- Clip / frame / ID: `...`
-- Tình huống: `...`
-- Quyết định: `...`
-- Lý do: `...`
+- Clip / frame / ID: clip02 - frame: 1 ID: 1
+- Tình huống: xe bị cắt bởi rìa ảnh, chỉ còn ~1/3 thân xe nhìn thấy, xe đang di chuyển ra ngoài frame
+- Quyết định: tiếp tục track; vẽ bbox ôm đúng phần 1/3 nhìn thấy, cạnh bbox chạm rìa ảnh — không đoán phần ngoài; dừng track ở frame cuối cùng còn nhìn thấy bất kỳ phần nào của xe
+- Lý do: còn nhìn thấy xe → vẫn đủ điều kiện annotate; dừng sớm làm trajectory bị cắt ngắn, sai metric
 
 ### Ca 2
-- Clip / frame / ID: `...`
-- Tình huống: `...`
-- Quyết định: `...`
-- Lý do: `...`
+- Clip / frame / ID: clip 02 / frame 14 / ID 4
+- Tình huống: xe mới bắt đầu vào frame, bị truncated, chỉ nhìn thấy đèn xe + 1 bánh trước (đúng 2 đặc điểm)
+- Quyết định: chờ thêm 2-3 frame để xác nhận xe vẫn còn trong frame; 
+- Lý do: chưa đủ đặc điểm để xác định xe vẫn còn trong frame, và chưa đủ đặc điểm nhận dạng để xác định object là vehicle
 
 ### Ca 3
-- Clip / frame / ID: `...`
-- Tình huống: `...`
-- Quyết định: `...`
-- Lý do: `...`
+- Clip / frame / ID: clip01 / frame77 / ID 5
+- Tình huống: xe bị che hoàn toàn từ đầu clip, chưa từng được annotate; frame 77 là lần đầu tiên nhìn thấy và nhận dạng được là xe bốn bánh
+- Quyết định: gán ID mới, bắt đầu track từ frame 77
+- Lý do: xe chưa có ID nào trước đó → không có track cũ để giữ; đây tương đương "xe vừa xuất hiện lần đầu", áp dụng luật bbox mục 3 — không áp dụng luật occlusion 25 frame vì không có track cũ để so sánh
 
 ## 5. Sửa gì sau khi chấm với gold và sau khi kiểm chéo
 
