@@ -70,5 +70,8 @@ Ghi **frame cụ thể** và **ID cụ thể**, không ghi chung chung.
 
 Luật nào trong file này hoá ra còn thiếu hoặc còn mơ hồ? Viết lại cho rõ:
 
-- `...`
-- `...`
+- Mục 3 — luật bắt đầu track còn mơ hồ: mục 3 ghi "xuất hiện ≥ 2 frame liên tiếp" nhưng không nói rõ phải bắt đầu track từ frame nào trong 2 frame đó. Thực tế tôi bắt đầu track từ frame thứ 2 hoặc thứ 3 thay vì frame đầu tiên → sinh ghost bbox ở frame 51–53 (ID 4) và frame 85–100 (ID 6). Sửa lại: "bắt đầu track ngay tại frame đầu tiên nhìn thấy đủ điều kiện, không chờ thêm frame để xác nhận."
+
+- Mục 3 — thiếu luật kết thúc track: không có quy tắc rõ về thời điểm bấm `outside`. Thực tế tôi để bbox tồn tại thêm 3 frame sau khi xe đã rời khung — lỗi ở frame 149–151 (ID 4) và frame 169–171 (ID 8). Thêm luật: "bấm `outside` ngay tại frame cuối cùng còn thấy bất kỳ pixel nào của xe; không để bbox tồn tại ở frame tiếp theo khi xe đã ra ngoài."
+
+- Mục 3 — thiếu luật mật độ keyframe: mục 3 chỉ ghi "đặt dày ở chỗ di chuyển nhanh" nhưng không có ngưỡng cụ thể. Thực tế bbox trôi ở frame 102–104 (ID 6) và frame 55 (ID 4), frame 96 (ID 5) đều nằm giữa hai keyframe cách xa nhau. Thêm luật: "nếu hai keyframe liên tiếp cách nhau hơn 15 frame, kiểm tra IoU tại frame giữa; nếu IoU < 0.65 thì thêm keyframe tại đó."
